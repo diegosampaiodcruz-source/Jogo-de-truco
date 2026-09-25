@@ -1,0 +1,81 @@
+:root {
+  --felt: #0b5d3b;
+  --felt-dark: #073e29;
+  --gold: #f4c95d;
+  --white: #fff;
+  --red: #b91c1c;
+  --shadow: 0 12px 30px #0006;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; font-family: Arial, sans-serif;
+  color: var(--white); background: #151515;
+}
+button {
+  border: 0; border-radius: 10px; padding: 11px 16px; cursor: pointer;
+  font-weight: 800; background: var(--gold); color: #201900;
+  transition: .15s transform, .15s opacity;
+}
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:disabled { opacity: .35; cursor: not-allowed; }
+button.danger { background: #e43d30; color: white; }
+button.ghost { background: transparent; color: white; border: 1px solid #ffffff55; }
+.app { width: min(1200px, 100%); margin: auto; padding: 14px; }
+.topbar { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+h1 { margin: 4px 0; font-size: clamp(24px, 4vw, 38px); }
+#status { margin: 5px 0 10px; color: #d8f5e7; min-height: 20px; }
+.scoreboard { display: flex; gap: 10px; }
+.scoreboard div { background: #222; padding: 8px 18px; border-radius: 12px; text-align: center; }
+.scoreboard span { display: block; font-size: 12px; color: #bbb; }
+.scoreboard strong { font-size: 28px; color: var(--gold); }
+.table {
+  position: relative; min-height: 720px; margin-top: 8px; overflow: hidden;
+  border: 10px solid #5a351e; border-radius: 36px;
+  background: radial-gradient(circle, #118253 0, var(--felt) 55%, var(--felt-dark) 100%);
+  box-shadow: inset 0 0 60px #0007, var(--shadow);
+}
+.table::after {
+  content:""; position:absolute; inset: 15px; border: 2px solid #ffffff22;
+  border-radius: 25px; pointer-events:none;
+}
+.player { position: absolute; z-index: 2; display:flex; align-items:center; gap:7px; font-weight:bold; }
+.player .avatar { font-size: 26px; }
+.top { top: 24px; left:50%; transform:translateX(-50%); flex-direction:column; }
+.left { left: 22px; top:50%; transform:translateY(-50%); flex-direction:column; }
+.right { right: 22px; top:50%; transform:translateY(-50%); flex-direction:column; }
+.bottom { bottom: 22px; left:50%; transform:translateX(-50%); flex-direction:column-reverse; }
+.center { position:absolute; inset: 23% 17% 24%; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:3; }
+.round-info { display:flex; gap:24px; background:#0006; padding:8px 14px; border-radius:20px; }
+.played { min-height: 175px; width: min(600px, 90%); display:flex; align-items:center; justify-content:center; gap: -10px; }
+.actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.cards { display:flex; justify-content:center; gap:7px; min-height:112px; }
+.card {
+  width:76px; height:108px; background:#fff; color:#111; border-radius:9px;
+  border:2px solid #ddd; box-shadow:0 7px 12px #0007; position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:28px; font-weight:900; user-select:none; cursor:pointer;
+}
+.card small { font-size:15px; }
+.card.red { color:#c62828; }
+.hand-card:hover { transform: translateY(-12px); }
+.card.selected { transform: translateY(-14px); outline:3px solid var(--gold); }
+.card.played-card { cursor:default; transform:rotate(var(--rot, 0deg)); }
+.card.back {
+  background: repeating-linear-gradient(45deg,#193f7a,#193f7a 7px,#274f91 7px,#274f91 14px);
+  border-color:#fff; color:transparent;
+}
+.back-row .card { margin-left:-35px; }
+.human-label { display:flex; align-items:center; gap:6px; }
+footer { display:flex; justify-content:space-between; align-items:center; padding:10px 4px; color:#aaa; }
+dialog { border:0; border-radius:16px; padding:25px; max-width:480px; box-shadow:var(--shadow); }
+dialog::backdrop { background:#0009; }
+dialog p { color:#333; line-height:1.5; }
+@media (max-width: 700px) {
+  .table { min-height: 650px; border-width:6px; }
+  .card { width:58px; height:84px; font-size:22px; }
+  .cards { min-height:90px; gap:4px; }
+  .back-row .card { margin-left:-28px; }
+  .left { left: 8px; } .right { right:8px; }
+  .center { inset: 24% 9% 27%; }
+  footer span { display:none; }
+}
