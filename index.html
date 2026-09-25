@@ -1,73 +1,91 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Truco Brasileiro</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <main class="app">
-    <header class="topbar">
-      <div>
-        <h1>🃏 Truco Brasileiro</h1>
-        <p id="status">Clique em “Novo jogo” para começar.</p>
-      </div>
-      <div class="scoreboard">
-        <div><span>Nós</span><strong id="scoreUs">0</strong></div>
-        <div><span>Eles</span><strong id="scoreThem">0</strong></div>
-      </div>
-    </header>
-
-    <section class="table">
-      <div class="player opponent top" id="p2">
-        <div class="avatar">🤖</div><span>Rival 1</span>
-        <div class="cards back-row" id="hand2"></div>
-      </div>
-
-      <div class="player opponent left" id="p3">
-        <div class="avatar">🤖</div><span>Rival 2</span>
-        <div class="cards back-row" id="hand3"></div>
-      </div>
-
-      <div class="center">
-        <div class="round-info">
-          <span>Vaza <b id="trickNumber">1</b>/3</span>
-          <span>Valor: <b id="handValue">1</b></span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Truco Brasileiro</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="score-panel">
+        <div class="panel-title">PLACAR</div>
+        <div class="score-row">
+          <span>VOCÊ + PARCEIRO</span>
+          <strong id="scoreYou">0</strong>
         </div>
-        <div class="played" id="played"></div>
-        <div class="actions" id="actions">
-          <button id="newGame">Novo jogo</button>
-          <button id="trucoBtn" class="danger" disabled>Truco!</button>
-          <button id="acceptBtn" disabled>Aceitar</button>
-          <button id="runBtn" disabled>Correr</button>
+        <div class="score-row">
+          <span>ADVERSÁRIOS</span>
+          <strong id="scoreOpp">0</strong>
+        </div>
+        <div class="bet-box">
+          <span>MÃO</span>
+          <strong id="betValue">1</strong>
+        </div>
+      </aside>
+
+      <section class="table-area">
+        <div class="table-surface">
+          <div class="player-slot player-top-left" data-role="opp1">
+            <div class="player-label">ADVERSÁRIO 1</div>
+            <div id="hand-opp1" class="hand hand-back" aria-label="Mão do adversário 1"></div>
+          </div>
+
+          <div class="player-slot player-top-center" data-role="partner">
+            <div class="player-label">SEU PARCEIRO</div>
+            <div id="hand-partner" class="hand hand-back" aria-label="Mão do parceiro"></div>
+          </div>
+
+          <div class="player-slot player-top-right" data-role="opp2">
+            <div class="player-label">ADVERSÁRIO 2</div>
+            <div id="hand-opp2" class="hand hand-back" aria-label="Mão do adversário 2"></div>
+          </div>
+
+          <div class="center-stage">
+            <div class="turn-banner" id="turnBanner">SUA VEZ</div>
+            <div class="vira-box">
+              <div class="vira-label">VIRA</div>
+              <div id="viraCard" class="vira-card"></div>
+            </div>
+            <div class="played-area" id="playedArea"></div>
+          </div>
+
+          <div class="player-slot player-bottom" data-role="you">
+            <div class="hand-container">
+              <div id="hand-you" class="hand hand-player" aria-label="Sua mão"></div>
+            </div>
+            <div class="player-label self">VOCÊ</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="action-row">
+        <button id="trucoBtn" class="action-button primary">🔥 TRUCO</button>
+        <button id="signalBtn" class="action-button">💬 SINAIS</button>
+        <button id="musicBtn" class="action-button">🎵 MÚSICA: ON</button>
+        <button id="newGameBtn" class="action-button secondary">↻ NOVA PARTIDA</button>
+      </div>
+
+      <div id="signalPanel" class="signal-panel hidden" aria-live="polite">
+        <div class="signal-header">Sinais do parceiro</div>
+        <div class="signal-grid">
+          <button class="signal-btn" data-signal="Tenho jogo!">👍 Tenho jogo!</button>
+          <button class="signal-btn" data-signal="Estou fraco">😅 Estou fraco</button>
+          <button class="signal-btn" data-signal="Confia em mim">🤝 Confia em mim</button>
+          <button class="signal-btn" data-signal="Peça Truco">🔥 Peça Truco</button>
+          <button class="signal-btn" data-signal="Tenho manilha">🃏 Tenho manilha</button>
+          <button class="signal-btn" data-signal="Não tenho nada">🤫 Não tenho nada</button>
         </div>
       </div>
 
-      <div class="player opponent right" id="p4">
-        <div class="avatar">🤖</div><span>Rival 3</span>
-        <div class="cards back-row" id="hand4"></div>
+      <div class="chat-panel">
+        <div class="chat-header">CHAT</div>
+        <div id="chatLog" class="chat-log"></div>
       </div>
+    </main>
 
-      <div class="player human bottom">
-        <div class="cards" id="hand1"></div>
-        <div class="human-label"><span class="avatar">🙂</span><span id="playerName">Você</span></div>
-      </div>
-    </section>
+    <div id="toast" class="toast" aria-live="polite"></div>
 
-    <footer>
-      <button id="helpBtn" class="ghost">Como jogar</button>
-      <span>Truco 2 × 2 • partida até 12 pontos</span>
-    </footer>
-  </main>
-
-  <dialog id="help">
-    <h2>Como jogar</h2>
-    <p>Você e seu parceiro jogam contra dois rivais. Cada jogador recebe 3 cartas e a rodada pode ter até 3 vazas.</p>
-    <p>As manilhas são definidas pela carta virada (vira). A ordem das manilhas, da maior para a menor, é: paus, copas, espadas, ouros.</p>
-    <p>Durante a rodada, você pode pedir Truco e aumentar para 6, 9 e 12. A dupla adversária pode aceitar, aumentar ou correr.</p>
-    <button id="closeHelp">Fechar</button>
-  </dialog>
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

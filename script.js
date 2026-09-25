@@ -1,184 +1,474 @@
 const SUITS = [
-  {name:"Paus", symbol:"♣", power:1},
-  {name:"Copas", symbol:"♥", power:2},
-  {name:"Espadas", symbol:"♠", power:3},
-  {name:"Ouros", symbol:"♦", power:4}
+  { name: 'Paus', symbol: '♣', color: '#1d2b36' },
+  { name: 'Copas', symbol: '♥', color: '#d73939' },
+  { name: 'Espadas', symbol: '♠', color: '#1d2b36' },
+  { name: 'Ouros', symbol: '♦', color: '#d73939' }
 ];
+
 const RANKS = [
-  {name:"4", value:4}, {name:"5", value:5}, {name:"6", value:6},
-  {name:"7", value:7}, {name:"Q", value:10}, {name:"J", value:11},
-  {name:"K", value:12}, {name:"A", value:13}, {name:"2", value:14},
-  {name:"3", value:15}
+  { code: '4', value: 1 },
+  { code: '5', value: 2 },
+  { code: '6', value: 3 },
+  { code: '7', value: 4 },
+  { code: 'Q', value: 5 },
+  { code: 'J', value: 6 },
+  { code: 'K', value: 7 },
+  { code: 'A', value: 8 },
+  { code: '2', value: 9 },
+  { code: '3', value: 10 }
 ];
 
-let state = null;
-const $ = id => document.getElementById(id);
+const RANK_TO_VALUE = Object.fromEntries(RANKS.map((rank) => [rank.code, rank.value]));
+const SUIT_ORDER = ['Paus', 'Copas', 'Espadas', 'Ouros'];
 
-function makeDeck() {
-  return SUITS.flatMap(s => RANKS.map(r => ({...r, suit:s.name, symbol:s.symbol, suitPower:s.power})));
+const state = {
+  players: [
+    { id: 'you', label: 'Você', team: 0, hand: [], human: true },
+    { id: 'partner', label: 'Parceiro', team: 0, hand: [], human: false },
+    { id: 'opp1', label: 'Adversário 1', team: 1, hand: [], human: false },
+    { id: 'opp2', label: 'Adversário 2', team: 1, hand: [], human: false }
+  ],
+  deck: [],
+  vira: null,
+  currentPlayer: 0,
+  played: [],
+  scores: { 0: 0, 1: 0 },
+  currentBet: 1,
+  pendingBet: null,
+  gameOver: false,
+  musicEnabled: true,
+  chat: [],
+  lastWinner: null,
+  audioCtx: null,
+  musicTimer: null
+};
+
+const elements = {
+  scoreYou: document.getElementById('scoreYou'),
+  scoreOpp: document.getElementById('scoreOpp'),
+  betValue: document.getElementById('betValue'),
+  turnBanner: document.getElementById('turnBanner'),
+  viraCard: document.getElementById('viraCard'),
+  playedArea: document.getElementById('playedArea'),
+  handYou: document.getElementById('hand-you'),
+  handPartner: document.getElementById('hand-partner'),
+  handOpp1: document.getElementById('hand-opp1'),
+  handOpp2: document.getElementById('hand-opp2'),
+  chatLog: document.getElementById('chatLog'),
+  signalPanel: document.getElementById('signalPanel'),
+  toast: document.getElementById('toast'),
+  musicBtn: document.getElementById('musicBtn'),
+  trucoBtn: document.getElementById('trucoBtn'),
+  newGameBtn: document.getElementById('newGameBtn')
+};
+
+function createDeck() {
+  const deck = [];
+  SUITS.forEach((suit) => {
+    RANKS.forEach((rank) => {
+      deck.push({
+        id: `${rank.code}-${suit.name}`,
+        rank: rank.code,
+        suit: suit.name,
+        symbol: suit.symbol,
+        color: suit.color,
+        value: rank.value,
+        strength: null
+      });
+    });
+  });
+  return deck;
 }
-function shuffle(a) {
-  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
-  return a;
+
+function shuffle(list) {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
+
+function nextRankCode(code) {
+  const sequence = RANKS.map((item) => item.code);
+  const currentIndex = sequence.indexOf(code);
+  return sequence[(currentIndex + 1) % sequence.length];
+}
+
+function cardIsManilha(card) {
+  return card.rank === nextRankCode(state.vira.rank);
+}
+
 function cardPower(card) {
-  if (card.name === state.manilhaRank) return 100 + card.suitPower;
-  return card.value;
-}
-function sortHand(hand) { hand.sort((a,b)=>cardPower(a)-cardPower(b)); }
+  if (cardIsManilha(card)) {
+    const suitStrength = SUIT_ORDER.indexOf(card.suit) + 1;
+    const rankOrder = RANKS.map((item) => item.code);
+    const rankPosition = rankOrder.indexOf(card.rank);
+    return 100 + (rankPosition * 10) + suitStrength;
+  }
 
-function newGame() {
-  state = {
-    scores:[0,0], handValue:1, acceptedValue:1, pendingRaise:false,
-    players:[{name:"Você",team:0,hand:[]},{name:"Rival 1",team:1,hand:[]},{name:"Parceiro",team:0,hand:[]},{name:"Rival 3",team:1,hand:[]}],
-    turn:0, trick:1, played:[], trickWins:[0,0], roundActive:true, waitingRaise:false
-  };
-  dealRound();
-  $("status").textContent = "Sua vez! Escolha uma carta.";
-  render();
+  return card.value * 10;
 }
-function dealRound() {
-  const deck = shuffle(makeDeck());
-  state.vira = deck.pop();
-  state.manilhaRank = nextRank(state.vira.name);
-  state.players.forEach(p => p.hand = [deck.pop(),deck.pop(),deck.pop()]);
-  state.players.forEach(p=>sortHand(p.hand));
-  state.turn = 0;
-  state.trick = 1;
+
+function compareCards(a, b) {
+  return cardPower(a) - cardPower(b);
+}
+
+function getPlayerByIndex(index) {
+  return state.players[index];
+}
+
+function buildMatch() {
+  state.players.forEach((player) => {
+    player.hand = [];
+  });
+  state.deck = shuffle(createDeck());
+  state.vira = state.deck.pop();
+  state.currentPlayer = 0;
   state.played = [];
-  state.trickWins = [0,0];
-  state.handValue = 1;
-  state.acceptedValue = 1;
-  state.waitingRaise = false;
+  state.pendingBet = null;
+  state.currentBet = 1;
+  state.gameOver = false;
+  state.lastWinner = null;
+
+  for (let i = 0; i < 3; i += 1) {
+    state.players.forEach((player) => {
+      player.hand.push(state.deck.pop());
+    });
+  }
+
+  state.chat = [
+    { author: 'Sistema', text: 'Nova partida iniciada. Sua vez!' },
+    { author: 'Sistema', text: `Vira: ${state.vira.rank} de ${state.vira.suit}` }
+  ];
+
+  render();
+  showToast('Partida iniciada!');
+  playTone(350, 0.08, 'triangle', 0.03);
 }
-function nextRank(rank) {
-  const i = RANKS.findIndex(r=>r.name===rank);
-  return RANKS[(i+1)%RANKS.length].name;
-}
+
 function render() {
-  $("scoreUs").textContent=state.scores[0]; $("scoreThem").textContent=state.scores[1];
-  $("trickNumber").textContent=state.trick; $("handValue").textContent=state.handValue;
-  renderHand(0,"hand1",true); renderHand(1,"hand2",false); renderHand(2,"hand3",false); renderHand(3,"hand4",false);
-  const played=$("played"); played.innerHTML="";
-  state.played.forEach((x,i)=>played.appendChild(cardElement(x.card,false,true,i)));
-  $("trucoBtn").disabled = !state.roundActive || state.waitingRaise || state.handValue>=12;
-  $("acceptBtn").disabled = !state.waitingRaise;
-  $("runBtn").disabled = !state.waitingRaise;
+  elements.scoreYou.textContent = state.scores[0];
+  elements.scoreOpp.textContent = state.scores[1];
+  elements.betValue.textContent = state.currentBet;
+
+  renderVira();
+  renderPlayersHands();
+  renderPlayedCards();
+  renderTurnBadge();
+  renderChat();
+  updateButtons();
 }
-function renderHand(pi,id,clickable) {
-  const el=$(id); el.innerHTML="";
-  state.players[pi].hand.forEach((c,i)=>el.appendChild(cardElement(c,clickable,false,i)));
+
+function renderVira() {
+  elements.viraCard.innerHTML = renderCardSvg(state.vira, true);
 }
-function cardElement(c,clickable,played,index) {
-  const d=document.createElement("div");
-  d.className="card"+(c.suit==="Copas"||c.suit==="Ouros"?" red ":" ")+(clickable?"hand-card":"")+(played?" played-card":"");
-  if (!clickable && !played) { d.className="card back"; return d; }
-  d.innerHTML=`<strong>${c.name}</strong><small>${c.symbol}</small>`;
-  if (played) d.style.setProperty("--rot", `${(index%2?1:-1)*index*3}deg`);
-  if (clickable) d.onclick=()=>playHumanCard(c);
-  return d;
+
+function renderPlayersHands() {
+  const handMap = {
+    you: elements.handYou,
+    partner: elements.handPartner,
+    opp1: elements.handOpp1,
+    opp2: elements.handOpp2
+  };
+
+  state.players.forEach((player) => {
+    const container = handMap[player.id];
+    container.innerHTML = '';
+
+    if (player.id === 'you') {
+      player.hand.forEach((card) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'card card-hand';
+        button.setAttribute('aria-label', `${card.rank} de ${card.suit}`);
+        button.innerHTML = renderCardSvg(card, true);
+        button.addEventListener('click', () => handleHumanPlay(card));
+        container.appendChild(button);
+      });
+      return;
+    }
+
+    if (player.hand.length) {
+      player.hand.forEach(() => {
+        const card = document.createElement('div');
+        card.className = 'card card-back';
+        container.appendChild(card);
+      });
+    }
+  });
 }
-function playHumanCard(card) {
-  if (!state.roundActive || state.waitingRaise || state.turn!==0) return;
-  playCard(0,card);
+
+function renderPlayedCards() {
+  elements.playedArea.innerHTML = '';
+
+  const slots = Array(4).fill(null);
+  state.played.forEach((entry) => {
+    slots[entry.slot] = entry.card;
+  });
+
+  slots.forEach((card, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card';
+
+    if (card) {
+      wrapper.innerHTML = renderCardSvg(card, true);
+      wrapper.style.transform = `rotate(${(index - 1.5) * 5}deg)`;
+    } else {
+      wrapper.className = 'card card-back';
+    }
+
+    elements.playedArea.appendChild(wrapper);
+  });
 }
-function playCard(pi,card) {
-  const p=state.players[pi];
-  const idx=p.hand.indexOf(card); if(idx<0)return;
-  p.hand.splice(idx,1);
-  state.played.push({player:pi,card});
-  state.turn=(pi+1)%4;
-  render();
-  if(state.played.length===4) setTimeout(resolveTrick,800);
-  else if(state.turn!==0) setTimeout(aiTurn,550);
-  else $("status").textContent="Sua vez! Escolha uma carta.";
+
+function renderTurnBadge() {
+  const labels = {
+    0: 'SUA VEZ',
+    1: 'PARCEIRO JOGANDO',
+    2: 'ADVERSÁRIO JOGANDO',
+    3: 'ADVERSÁRIO JOGANDO'
+  };
+  elements.turnBanner.textContent = labels[state.currentPlayer] || 'VEZ';
 }
-function aiTurn() {
-  if(!state.roundActive || state.waitingRaise || state.turn===0)return;
-  const pi=state.turn, p=state.players[pi];
-  if (maybeAiTruco(pi)) return;
-  const card=chooseAiCard(pi);
-  playCard(pi,card);
+
+function renderChat() {
+  elements.chatLog.innerHTML = '';
+  state.chat.slice(-8).forEach((entry) => {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${entry.author === 'Você' ? 'self' : ''}`.trim();
+    bubble.textContent = `${entry.author}: ${entry.text}`;
+    elements.chatLog.appendChild(bubble);
+  });
 }
-function chooseAiCard(pi) {
-  const hand=state.players[pi].hand;
-  if(state.played.length===0) return hand[Math.floor(Math.random()*hand.length)];
-  const strongest=hand.reduce((a,b)=>cardPower(a)>cardPower(b)?a:b);
-  const weakest=hand.reduce((a,b)=>cardPower(a)<cardPower(b)?a:b);
-  const current=state.played[state.played.length-1];
-  return cardPower(current.card)>cardPower(strongest) ? weakest : strongest;
+
+function updateButtons() {
+  elements.trucoBtn.disabled = state.gameOver || state.currentPlayer !== 0;
+  elements.musicBtn.textContent = `🎵 MÚSICA: ${state.musicEnabled ? 'ON' : 'OFF'}`;
 }
-function maybeAiTruco(pi) {
-  if(state.handValue>=12 || state.waitingRaise || state.played.length===4) return false;
-  const p=state.players[pi];
-  const strong=p.hand.filter(c=>cardPower(c)>=13).length;
-  if(strong>=2 && Math.random()<0.18) {
-    requestRaise(pi);
-    return true;
-  }
-  return false;
+
+function handleHumanPlay(card) {
+  if (state.gameOver || state.currentPlayer !== 0) return;
+  playCard(0, card);
 }
-function requestRaise(pi) {
-  const next = state.handValue===1?3:state.handValue===3?6:state.handValue===6?9:12;
-  state.handValue=next; state.waitingRaise=true; state.pendingRaise=pi;
-  $("status").textContent = `${state.players[pi].name} pediu ${next === 3 ? "TRUCO" : next}!`;
-  render();
-  if(pi!==0) {
-    setTimeout(()=>aiRespondToRaise(),700);
-  }
-}
-function aiRespondToRaise() {
-  const required=state.handValue;
-  const humanTeam=0;
-  const adversaryAsked=state.players[state.pendingRaise].team!==humanTeam;
-  const asker=state.pendingRaise;
-  const responders=[0,1,2,3].filter(i=>i!==asker && state.players[i].team!==state.players[asker].team);
-  const best=responders.reduce((m,i)=>Math.max(m,...state.players[i].hand.map(cardPower)),0);
-  if(best>=13 || Math.random()<0.38) {
-    state.waitingRaise=false; state.acceptedValue=required;
-    $("status").textContent=`${state.players[asker].name} pediu ${labelValue(required)}. Aceito!`;
+
+function playCard(playerIndex, card) {
+  const player = getPlayerByIndex(playerIndex);
+  const index = player.hand.findIndex((item) => item.id === card.id);
+  if (index < 0) return;
+
+  player.hand.splice(index, 1);
+  state.played.push({ playerIndex, card, slot: state.played.length });
+  state.currentPlayer = (playerIndex + 1) % 4;
+
+  playTone(260 + playerIndex * 30, 0.08, 'sine', 0.025);
+
+  if (state.played.length === 4) {
+    setTimeout(resolveTrick, 700);
     render();
-    if(state.turn!==0) setTimeout(aiTurn,500);
-  } else {
-    const pts=state.acceptedValue;
-    state.scores[state.players[asker].team]+=pts;
-    endRound(`${state.players[asker].name} fez a outra dupla correr.`);
-  }
-}
-function labelValue(v){ return v===3?"TRUCO":String(v); }
-function resolveTrick() {
-  const max=Math.max(...state.played.map(x=>cardPower(x.card)));
-  const winners=state.played.filter(x=>cardPower(x.card)===max);
-  const winner=winners[0].player;
-  state.trickWins[state.players[winner].team]++;
-  $("status").textContent=`${state.players[winner].name} venceu a vaza!`;
-  if(state.trickWins[state.players[winner].team]>=2 || state.trick>=3) {
-    const team=state.trickWins[0]>state.trickWins[1]?0:1;
-    state.scores[team]+=state.handValue;
-    setTimeout(()=>endRound(team===0?"Sua dupla ganhou a rodada!":"A dupla adversária ganhou a rodada!"),700);
     return;
   }
-  state.trick++; state.played=[]; state.turn=winner; render();
-  setTimeout(()=>state.turn===0?$("status").textContent="Sua vez!":aiTurn(),600);
-}
-function endRound(msg) {
-  state.roundActive=false; state.waitingRaise=false; $("status").textContent=msg;
+
   render();
-  if(state.scores[0]>=12 || state.scores[1]>=12) {
-    $("status").textContent += ` Partida encerrada: ${state.scores[0]>=12?"sua dupla":"a dupla adversária"} chegou a 12.`;
-  } else {
-    setTimeout(()=>{ dealRound(); state.roundActive=true; $("status").textContent="Nova rodada! Sua vez."; render(); },1300);
+
+  if (state.currentPlayer !== 0) {
+    const wait = 1700 + Math.random() * 1300;
+    setTimeout(() => {
+      if (!state.gameOver) {
+        aiPlay();
+      }
+    }, wait);
   }
 }
-$("newGame").onclick=newGame;
-$("trucoBtn").onclick=()=>{ if(state.roundActive && !state.waitingRaise) requestRaise(0); };
-$("acceptBtn").onclick=()=>{ state.waitingRaise=false; state.acceptedValue=state.handValue; $("status").textContent="Você aceitou!"; render(); if(state.turn!==0)setTimeout(aiTurn,500); };
-$("runBtn").onclick=()=>{
-  if(!state.waitingRaise)return;
-  const team=state.players[state.pendingRaise].team;
-  state.scores[team]+=state.acceptedValue;
-  endRound("Você correu. A outra dupla marcou os pontos.");
-};
-$("helpBtn").onclick=()=> $("help").showModal();
-$("closeHelp").onclick=()=> $("help").close();
-newGame();
+
+function aiPlay() {
+  if (state.gameOver || state.currentPlayer === 0) return;
+
+  const player = getPlayerByIndex(state.currentPlayer);
+  if (!player || !player.hand.length) return;
+
+  const chosen = chooseAiCard(player);
+  playCard(state.currentPlayer, chosen);
+}
+
+function chooseAiCard(player) {
+  if (!player.hand.length) return null;
+
+  if (state.played.length === 0) {
+    return player.hand.reduce((best, current) => (
+      cardPower(current) > cardPower(best) ? current : best
+    ));
+  }
+
+  const lastCard = state.played[state.played.length - 1].card;
+  const strongCards = player.hand.filter((card) => compareCards(card, lastCard) > 0);
+
+  if (strongCards.length) {
+    return strongCards.reduce((best, current) => (
+      cardPower(current) > cardPower(best) ? current : best
+    ));
+  }
+
+  return player.hand.reduce((best, current) => (
+    cardPower(current) > cardPower(best) ? current : best
+  ));
+}
+
+function resolveTrick() {
+  const winnerEntry = state.played.reduce((best, current) => {
+    if (!best) return current;
+    return compareCards(current.card, best.card) > 0 ? current : best;
+  }, null);
+
+  const winnerIndex = winnerEntry.playerIndex;
+  const team = getPlayerByIndex(winnerIndex).team;
+  state.scores[team] += 1;
+  state.lastWinner = winnerIndex;
+  state.played = [];
+  state.currentPlayer = winnerIndex;
+
+  playTone(660, 0.09, 'square', 0.04);
+  showToast(`${getPlayerByIndex(winnerIndex).label} venceu a vaza.`);
+
+  const targetScore = 12;
+  if (state.scores[0] >= targetScore || state.scores[1] >= targetScore) {
+    state.gameOver = true;
+    const winnerLabel = state.scores[0] >= targetScore ? '🏆 VITÓRIA!' : '😔 DERROTA';
+    state.chat.push({ author: 'Sistema', text: `${winnerLabel} Placar final: ${state.scores[0]} x ${state.scores[1]}` });
+    render();
+    return;
+  }
+
+  state.chat.push({ author: 'Sistema', text: `${getPlayerByIndex(winnerIndex).label} ganhou a vaza.` });
+  render();
+
+  if (state.currentPlayer === 0) {
+    showToast('Sua vez!');
+  } else {
+    const wait = 1200 + Math.random() * 900;
+    setTimeout(() => {
+      if (!state.gameOver) aiPlay();
+    }, wait);
+  }
+}
+
+function toggleSignals() {
+  elements.signalPanel.classList.toggle('hidden');
+}
+
+function sendSignal(signalText) {
+  state.chat.push({ author: 'Você', text: signalText });
+  showToast('Seu parceiro recebeu o sinal.');
+  render();
+
+  const autoReply = {
+    'Tenho jogo!': 'Entendi, vou seguir com confiança.',
+    'Estou fraco': 'Sem problema, eu apoio.',
+    'Confia em mim': 'Confio em você.',
+    'Peça Truco': 'Truco aceito! Eu vou junto.',
+    'Tenho manilha': 'Ótimo, vou tentar fechar.',
+    'Não tenho nada': 'Tudo bem, seguimos firme.'
+  }[signalText] || 'Entendi.';
+
+  setTimeout(() => {
+    state.chat.push({ author: 'Parceiro', text: autoReply });
+    render();
+  }, 800);
+}
+
+function bindSignals() {
+  document.querySelectorAll('.signal-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      sendSignal(button.dataset.signal);
+      elements.signalPanel.classList.add('hidden');
+    });
+  });
+}
+
+function handleTruco() {
+  if (state.gameOver || state.currentPlayer !== 0) return;
+
+  const nextBet = state.currentBet === 1 ? 3 : state.currentBet === 3 ? 6 : state.currentBet === 6 ? 9 : 12;
+  if (nextBet > 12) return;
+
+  state.currentBet = nextBet;
+  state.pendingBet = { caller: 0, value: nextBet };
+  state.chat.push({ author: 'Você', text: `TRUCO! ${nextBet} pontos` });
+  render();
+  showToast(`TRUCO! Mão agora em ${nextBet}.`);
+  playTone(520, 0.12, 'sawtooth', 0.045);
+}
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.classList.add('visible');
+  clearTimeout(showToast.timeoutId);
+  showToast.timeoutId = setTimeout(() => {
+    elements.toast.classList.remove('visible');
+  }, 1200);
+}
+
+function playTone(frequency, duration, type = 'sine', volume = 0.02) {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+
+  if (!state.audioCtx) {
+    state.audioCtx = new AudioCtx();
+  }
+
+  const ctx = state.audioCtx;
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+  }
+
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+  gain.gain.value = volume;
+
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+
+  oscillator.start();
+  oscillator.stop(ctx.currentTime + duration);
+}
+
+function toggleMusic() {
+  state.musicEnabled = !state.musicEnabled;
+  updateButtons();
+
+  if (!state.musicEnabled) {
+    if (state.musicTimer) {
+      clearInterval(state.musicTimer);
+      state.musicTimer = null;
+    }
+    return;
+  }
+
+  if (state.musicTimer) {
+    clearInterval(state.musicTimer);
+  }
+
+  state.musicTimer = setInterval(() => {
+    playTone(196, 0.21, 'triangle', 0.018);
+    setTimeout(() => playTone(261.63, 0.18, 'sine', 0.015), 210);
+  }, 1100);
+}
+
+function bindEvents() {
+  document.getElementById('signalBtn').addEventListener('click', toggleSignals);
+  document.getElementById('newGameBtn').addEventListener('click', buildMatch);
+  document.getElementById('trucoBtn').addEventListener('click', handleTruco);
+  document.getElementById('musicBtn').addEventListener('click', toggleMusic);
+  bindSignals();
+}
+
+function init() {
+  bindEvents();
+  buildMatch();
+  toggleMusic();
+}
+
+init();
