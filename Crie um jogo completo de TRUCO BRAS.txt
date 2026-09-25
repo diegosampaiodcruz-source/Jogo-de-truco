@@ -1,0 +1,693 @@
+Crie um jogo completo de TRUCO brasileiro para navegador, pronto para ser colocado em um repositório do GitHub e executado pelo GitHub Pages.
+
+O projeto deve ser desenvolvido usando HTML5, CSS3 e JavaScript puro, sem depender de frameworks obrigatórios.
+
+IMPORTANTE:
+O jogo deve ser realmente funcional e jogável, e não apenas uma interface visual.
+
+==================================================
+1. ESTRUTURA DO PROJETO
+==================================================
+
+Criar esta estrutura:
+
+truco-completo-v2/
+│
+├── index.html
+├── style.css
+├── script.js
+├── README.md
+│
+└── assets/
+    ├── cards/
+    │   ├── as-ouros.svg
+    │   ├── 2-ouros.svg
+    │   ├── 3-ouros.svg
+    │   ├── 4-ouros.svg
+    │   ├── 5-ouros.svg
+    │   ├── 6-ouros.svg
+    │   ├── 7-ouros.svg
+    │   ├── q-ouros.svg
+    │   ├── j-ouros.svg
+    │   ├── k-ouros.svg
+    │   ├── as-espadas.svg
+    │   ├── 2-espadas.svg
+    │   ├── 3-espadas.svg
+    │   ├── 4-espadas.svg
+    │   ├── 5-espadas.svg
+    │   ├── 6-espadas.svg
+    │   ├── 7-espadas.svg
+    │   ├── q-espadas.svg
+    │   ├── j-espadas.svg
+    │   ├── k-espadas.svg
+    │   ├── as-copas.svg
+    │   ├── 2-copas.svg
+    │   ├── 3-copas.svg
+    │   ├── 4-copas.svg
+    │   ├── 5-copas.svg
+    │   ├── 6-copas.svg
+    │   ├── 7-copas.svg
+    │   ├── q-copas.svg
+    │   ├── j-copas.svg
+    │   ├── k-copas.svg
+    │   ├── as-paus.svg
+    │   ├── 2-paus.svg
+    │   ├── 3-paus.svg
+    │   ├── 4-paus.svg
+    │   ├── 5-paus.svg
+    │   ├── 6-paus.svg
+    │   ├── 7-paus.svg
+    │   ├── q-paus.svg
+    │   ├── j-paus.svg
+    │   └── k-paus.svg
+    │
+    ├── icons/
+    └── sounds/
+        ├── card.mp3
+        ├── truco.mp3
+        ├── victory.mp3
+        └── background.mp3
+
+==================================================
+2. VISUAL DO JOGO
+==================================================
+
+Criar uma mesa de Truco com aparência moderna e profissional.
+
+A mesa deve ser:
+
+- verde de feltro;
+- formato oval;
+- borda de madeira;
+- iluminação suave;
+- sombras;
+- aparência de mesa real;
+- cartas com aparência física;
+- animações suaves.
+
+O jogo deve funcionar bem em:
+
+- computador;
+- notebook;
+- tablet;
+- celular.
+
+Utilizar layout responsivo.
+
+==================================================
+3. CARTAS EM SVG
+==================================================
+
+Todas as cartas devem utilizar SVG.
+
+NÃO utilizar imagens rasterizadas para representar as cartas.
+
+Cada carta deve ter:
+
+- fundo branco;
+- bordas arredondadas;
+- número/letra no canto superior;
+- número/letra no canto inferior invertido;
+- naipe;
+- símbolo grande no centro;
+- cores corretas para os naipes;
+- aparência profissional;
+- sombra;
+- animação ao selecionar.
+
+As cartas devem ser vetoriais e permanecer nítidas em qualquer resolução.
+
+Criar SVGs individuais para todas as cartas.
+
+==================================================
+4. BARALHO
+==================================================
+
+Utilizar um baralho de Truco com 40 cartas:
+
+Ouros:
+A, 2, 3, 4, 5, 6, 7, Q, J, K
+
+Espadas:
+A, 2, 3, 4, 5, 6, 7, Q, J, K
+
+Copas:
+A, 2, 3, 4, 5, 6, 7, Q, J, K
+
+Paus:
+A, 2, 3, 4, 5, 6, 7, Q, J, K
+
+Embaralhar as cartas antes de cada rodada.
+
+Nunca repetir uma carta dentro da mesma rodada.
+
+==================================================
+5. JOGADORES
+==================================================
+
+Utilizar quatro jogadores:
+
+1. VOCÊ
+2. SEU PARCEIRO
+3. ADVERSÁRIO 1
+4. ADVERSÁRIO 2
+
+A mesa deve representar uma partida de Truco em duplas.
+
+IMPORTANTE:
+
+SEU PARCEIRO DEVE FICAR EXATAMENTE À SUA FRENTE.
+
+Layout:
+
+              ADVERSÁRIO 1
+
+              SEU PARCEIRO
+
+ADVERSÁRIO 2                    ADVERSÁRIO 3
+
+                   VOCÊ
+
+A posição deve ficar visualmente clara.
+
+==================================================
+6. CARTAS DO JOGADOR
+==================================================
+
+O jogador deve receber 3 cartas.
+
+As três cartas devem ficar na parte inferior da tela.
+
+As cartas devem ficar levemente sobrepostas, formando uma mão bonita.
+
+Ao passar o mouse sobre uma carta:
+
+- levantar a carta;
+- aumentar levemente;
+- adicionar sombra;
+- destacar a carta.
+
+No celular:
+
+- permitir toque na carta.
+
+==================================================
+7. UM CLIQUE PARA JOGAR
+==================================================
+
+IMPORTANTE:
+
+O jogador deve conseguir jogar uma carta com APENAS UM CLIQUE.
+
+Não criar botão separado "Jogar carta".
+
+Ao clicar na carta:
+
+1. A carta sai da mão;
+2. A carta é animada até o centro da mesa;
+3. A carta permanece visível na mesa;
+4. A vez passa para o próximo jogador.
+
+Não exigir confirmação.
+
+==================================================
+8. CARTAS JOGADAS
+==================================================
+
+TODAS as cartas que forem jogadas devem permanecer VISÍVEIS.
+
+Não esconder cartas jogadas.
+
+A mesa deve mostrar claramente:
+
+- carta do adversário 1;
+- carta do parceiro;
+- carta do adversário 2;
+- sua carta.
+
+As cartas jogadas devem permanecer no centro da mesa até o final da rodada/vaza.
+
+Usar animação de entrada.
+
+==================================================
+9. CARTA VIRA
+==================================================
+
+A carta VIRA deve ficar visível durante a rodada.
+
+Colocar a VIRA em uma área bem identificada.
+
+Exemplo:
+
+       VIRA
+       [ carta ]
+
+A VIRA deve utilizar o mesmo sistema SVG das demais cartas.
+
+Mostrar claramente qual carta é a VIRA.
+
+==================================================
+10. MANILHAS
+==================================================
+
+Implementar corretamente a lógica de manilhas do Truco.
+
+A manilha deve ser determinada pela carta VIRA.
+
+As quatro cartas imediatamente superiores à VIRA na ordem do baralho devem ser as manilhas.
+
+A ordem das manilhas deve ser:
+
+Paus
+Copas
+Espadas
+Ouros
+
+A lógica de comparação das cartas deve respeitar as regras do Truco.
+
+==================================================
+11. VEZ DOS JOGADORES
+==================================================
+
+Mostrar claramente de quem é a vez.
+
+Exemplo:
+
+" SUA VEZ "
+
+ou
+
+" PARCEIRO JOGANDO "
+
+ou
+
+" ADVERSÁRIO JOGANDO "
+
+Destacar visualmente o jogador da vez.
+
+==================================================
+12. IA
+==================================================
+
+Os adversários devem jogar automaticamente.
+
+IMPORTANTE:
+
+A IA NÃO DEVE JOGAR RÁPIDO DEMAIS.
+
+Criar atraso natural entre as jogadas.
+
+Exemplo:
+
+Jogador:
+joga imediatamente.
+
+IA:
+espera aproximadamente 1,5 a 3 segundos.
+
+O parceiro também deve esperar antes de jogar.
+
+Adicionar pequenas variações aleatórias no tempo.
+
+As jogadas devem parecer humanas.
+
+==================================================
+13. INTELIGÊNCIA DA IA
+==================================================
+
+A IA deve considerar:
+
+- força da carta;
+- manilha;
+- cartas já jogadas;
+- rodada atual;
+- valor do Truco;
+- possibilidade de ganhar a vaza.
+
+Não fazer a IA simplesmente escolher uma carta aleatória.
+
+Criar uma estratégia básica.
+
+==================================================
+14. SISTEMA DE TRUCO
+==================================================
+
+Criar botão:
+
+🔥 TRUCO
+
+Quando o jogador clicar:
+
+Mostrar uma animação/modal:
+
+"TRUCO!"
+
+Permitir:
+
+- aceitar;
+- correr;
+- aumentar.
+
+Valores:
+
+1 ponto
+3 pontos
+6 pontos
+9 pontos
+12 pontos
+
+Mostrar claramente o valor atual da mão.
+
+==================================================
+15. PLACAR
+==================================================
+
+O placar deve ficar no:
+
+CANTO SUPERIOR ESQUERDO.
+
+Nunca colocar o placar no centro da mesa.
+
+Exemplo:
+
+┌─────────────────────────┐
+│ VOCÊ + PARCEIRO   5     │
+│ ADVERSÁRIOS       3     │
+└─────────────────────────┘
+
+O placar deve ficar sempre visível.
+
+No celular deve continuar acessível sem atrapalhar as cartas.
+
+==================================================
+16. SINAIS PARA O PARCEIRO
+==================================================
+
+Criar botão:
+
+💬 SINAIS
+
+Ao clicar, abrir um pequeno painel.
+
+Opções:
+
+👍 Tenho jogo!
+😅 Estou fraco
+🤝 Confia em mim
+🔥 Peça Truco
+🃏 Tenho manilha
+🤫 Não tenho nada
+
+Os sinais devem ser enviados somente para o parceiro.
+
+Mostrar uma pequena mensagem visual:
+
+"Seu parceiro recebeu o sinal."
+
+O parceiro pode responder com sinais automáticos.
+
+==================================================
+17. CHAT
+==================================================
+
+Criar uma área de comunicação visual entre jogador e parceiro.
+
+Não precisa ser multiplayer real nesta primeira versão.
+
+O sistema pode simular as respostas do parceiro.
+
+Exemplo:
+
+Você:
+"Tenho jogo!"
+
+Parceiro:
+"Entendi."
+
+==================================================
+18. MÚSICA
+==================================================
+
+Adicionar música ambiente.
+
+Criar controle:
+
+🎵 Música: ON/OFF
+
+A música deve:
+
+- iniciar de maneira compatível com as regras dos navegadores;
+- possuir loop;
+- ter volume baixo;
+- não atrapalhar os efeitos.
+
+Não utilizar música com direitos autorais sem permissão.
+
+Se não houver arquivo de áudio, deixar a estrutura pronta para adicionar posteriormente.
+
+==================================================
+19. EFEITOS SONOROS
+==================================================
+
+Adicionar sons para:
+
+- jogar carta;
+- Truco;
+- aceitar;
+- correr;
+- ganhar rodada;
+- ganhar partida.
+
+Criar pasta:
+
+assets/sounds/
+
+==================================================
+20. ANIMAÇÕES
+==================================================
+
+Adicionar animações suaves para:
+
+- carta sendo jogada;
+- carta entrando na mesa;
+- carta sendo selecionada;
+- Truco;
+- vitória;
+- derrota;
+- troca de vez;
+- sinal para parceiro.
+
+Evitar animações exageradas.
+
+==================================================
+21. VITÓRIA
+==================================================
+
+Quando uma dupla atingir 12 pontos:
+
+Mostrar uma tela/modal:
+
+🏆 VITÓRIA!
+
+ou
+
+😔 DERROTA
+
+Mostrar:
+
+- placar final;
+- botão "Nova partida".
+
+==================================================
+22. NOVA PARTIDA
+==================================================
+
+Criar botão:
+
+↻ NOVA PARTIDA
+
+Ao clicar:
+
+- zerar placar;
+- embaralhar baralho;
+- distribuir novas cartas;
+- escolher nova VIRA;
+- iniciar nova partida.
+
+==================================================
+23. INTERFACE
+==================================================
+
+A interface deve ser limpa.
+
+Evitar excesso de botões.
+
+Os principais controles devem ficar na parte inferior:
+
+🔥 TRUCO
+💬 SINAIS
+🎵 MÚSICA
+↻ NOVA PARTIDA
+
+Os botões devem possuir:
+
+- bordas arredondadas;
+- sombras;
+- animação hover;
+- boa área de toque no celular.
+
+==================================================
+24. RESPONSIVIDADE
+==================================================
+
+O jogo deve funcionar em:
+
+1920x1080
+1366x768
+1280x720
+1024x768
+768x1024
+390x844
+375x667
+
+No celular:
+
+- reduzir tamanho das cartas;
+- adaptar a mesa;
+- manter o parceiro visível;
+- manter a VIRA visível;
+- manter o placar;
+- permitir rolagem somente quando necessário.
+
+==================================================
+25. CÓDIGO
+==================================================
+
+Separar o projeto em:
+
+index.html
+style.css
+script.js
+
+Não colocar todo o código em um único arquivo.
+
+Utilizar JavaScript organizado em funções.
+
+Criar funções para:
+
+- criar baralho;
+- embaralhar;
+- distribuir;
+- renderizar cartas;
+- jogar carta;
+- determinar manilha;
+- comparar cartas;
+- controlar turnos;
+- controlar IA;
+- controlar Truco;
+- controlar placar;
+- controlar sinais;
+- controlar música;
+- iniciar nova rodada;
+- iniciar nova partida.
+
+==================================================
+26. SVG
+==================================================
+
+As cartas devem ser SVG reais.
+
+Não transformar SVG em imagem PNG.
+
+O navegador deve renderizar os SVG diretamente.
+
+Utilizar SVG para:
+
+- cartas;
+- ícones;
+- elementos decorativos;
+- símbolos dos naipes.
+
+==================================================
+27. EXPERIÊNCIA DO USUÁRIO
+==================================================
+
+O jogo deve parecer um jogo de Truco de verdade.
+
+Ao abrir:
+
+1. Mostrar a mesa.
+2. Distribuir cartas.
+3. Mostrar VIRA.
+4. Mostrar placar.
+5. Mostrar jogadores.
+6. Indicar a vez.
+7. Permitir jogar imediatamente.
+
+O jogador não deve precisar configurar nada para começar.
+
+==================================================
+28. CORREÇÕES IMPORTANTES
+==================================================
+
+NÃO criar:
+
+- cartas sem função;
+- botões que não funcionam;
+- links quebrados;
+- imagens inexistentes;
+- arquivos referenciados que não existem;
+- funções falsas;
+- cartas repetidas;
+- placar que não atualiza.
+
+Todos os botões devem possuir comportamento funcional.
+
+==================================================
+29. README
+==================================================
+
+Criar README.md explicando:
+
+- como executar;
+- como colocar no GitHub;
+- como ativar GitHub Pages;
+- estrutura dos arquivos;
+- como substituir os sons;
+- como adicionar novas cartas;
+- como alterar a IA.
+
+==================================================
+30. RESULTADO FINAL
+==================================================
+
+Entregar o projeto completo e funcional.
+
+Criar todos os arquivos.
+
+Não entregar somente exemplos ou trechos.
+
+O resultado final deve estar pronto para:
+
+1. baixar;
+2. extrair;
+3. abrir o index.html;
+4. jogar;
+5. enviar para o GitHub;
+6. publicar no GitHub Pages.
+
+PRIORIDADE ABSOLUTA:
+
+1. Jogabilidade funcional.
+2. Parceiro na frente.
+3. Cartas SVG.
+4. VIRA visível.
+5. Todas as cartas jogadas visíveis.
+6. Um clique para jogar.
+7. Placar no canto superior esquerdo.
+8. IA mais lenta e natural.
+9. Truco funcional.
+10. Sinais para o parceiro.
+11. Música e efeitos.
+12. Responsividade.
+13. Visual profissional.
