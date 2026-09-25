@@ -5,21 +5,10 @@ const SUITS = [
   { name: 'Ouros', symbol: '♦', color: '#d73939' }
 ];
 
-const RANKS = [
-  { code: '4', value: 1 },
-  { code: '5', value: 2 },
-  { code: '6', value: 3 },
-  { code: '7', value: 4 },
-  { code: 'Q', value: 5 },
-  { code: 'J', value: 6 },
-  { code: 'K', value: 7 },
-  { code: 'A', value: 8 },
-  { code: '2', value: 9 },
-  { code: '3', value: 10 }
-];
-
-const RANK_TO_VALUE = Object.fromEntries(RANKS.map((rank) => [rank.code, rank.value]));
+const CARD_ORDER = ['4', '5', '6', '7', 'Q', 'J', 'K', 'A', '2', '3'];
 const SUIT_ORDER = ['Paus', 'Copas', 'Espadas', 'Ouros'];
+
+const RANK_TO_VALUE = Object.fromEntries(CARD_ORDER.map((code, index) => [code, index + 1]));
 
 const state = {
   players: [
@@ -65,15 +54,15 @@ const elements = {
 function createDeck() {
   const deck = [];
   SUITS.forEach((suit) => {
-    RANKS.forEach((rank) => {
+    CARD_ORDER.forEach((rank) => {
       deck.push({
-        id: `${rank.code}-${suit.name}`,
-        rank: rank.code,
+        id: `${rank}-${suit.name}`,
+        rank,
         suit: suit.name,
         symbol: suit.symbol,
         color: suit.color,
-        value: rank.value,
-        strength: null
+        value: RANK_TO_VALUE[rank],
+        order: CARD_ORDER.indexOf(rank)
       });
     });
   });
@@ -89,39 +78,65 @@ function shuffle(list) {
   return arr;
 }
 
-function nextRankCode(code) {
-  const sequence = RANKS.map((item) => item.code);
-  const currentIndex = sequence.indexOf(code);
-  return sequence[(currentIndex + 1) % sequence.length];
+function getNextRank(cardRank) {
+  const index = CARD_ORDER.indexOf(cardRank);
+  return CARD_ORDER[(index + 1) % CARD_ORDER.length];
 }
 
-function cardIsManilha(card) {
-  return card.rank === nextRankCode(state.vira.rank);
+function isManilha(card) {
+  if (!state.vira) return false;
+  return card.rank === getNextRank(state.vira.rank);
 }
 
-function cardPower(card) {
-  if (cardIsManilha(card)) {
-    const suitStrength = SUIT_ORDER.indexOf(card.suit) + 1;
-    const rankOrder = RANKS.map((item) => item.code);
-    const rankPosition = rankOrder.indexOf(card.rank);
-    return 100 + (rankPosition * 10) + suitStrength;
+function getCardStrength(card) {
+  const suitPower = SUIT_ORDER.indexOf(card.suit) + 1;
+
+  if (isManilha(card)) {
+    return 2000 + suitPower;
   }
 
-  return card.value * 10;
+  return 1000 + (RANK_TO_VALUE[card.rank] * 10);
 }
 
 function compareCards(a, b) {
-  return cardPower(a) - cardPower(b);
+  return getCardStrength(a) - getCardStrength(b);
 }
 
 function getPlayerByIndex(index) {
   return state.players[index];
 }
 
+function formatCardLabel(card) {
+  return `${card.rank} de ${card.suit}`;
+}
+
+function renderCardSvg(card, isFace = true) {
+  if (!card) {
+    return '';
+  }
+
+  const isRed = card.color === '#d73939';
+  const textColor = isRed ? '#d73939' : '#1d2b36';
+  const accent = card.symbol;
+
+  return `
+    <svg viewBox="0 0 84 118" xmlns="http://www.w3.org/2000/svg" aria-label="${formatCardLabel(card)}">
+      <rect x="2" y="2" width="80" height="114" rx="12" fill="#ffffff" stroke="#dfe7ef" stroke-width="2"/>
+      <text x="16" y="20" font-size="16" font-weight="700" fill="${textColor}">${card.rank}</text>
+      <text x="16" y="102" font-size="16" font-weight="700" transform="rotate(180 16 102)" fill="${textColor}">${card.rank}</text>
+      <text x="42" y="64" font-size="28" text-anchor="middle" fill="${textColor}">${accent}</text>
+      <text x="42" y="90" font-size="22" text-anchor="middle" fill="${textColor}">${accen t}</text>
+      <text x="68" y="26" font-size="12" font-weight="700" fill="${textColor}">${card.symbol}</text>
+      <text x="68" y="100" font-size="12" font-weight="700" transform="rotate(180 68 100)" fill="${textColor}">${card.symbol}</text>
+    </svg>
+  `;
+}
+
 function buildMatch() {
   state.players.forEach((player) => {
     player.hand = [];
   });
+
   state.deck = shuffle(createDeck());
   state.vira = state.deck.pop();
   state.currentPlayer = 0;
@@ -131,6 +146,7 @@ function buildMatch() {
   state.gameOver = false;
   state.lastWinner = null;
 
+  // deal 3 cards each (rotina simples de distribuição)
   for (let i = 0; i < 3; i += 1) {
     state.players.forEach((player) => {
       player.hand.push(state.deck.pop());
@@ -144,7 +160,7 @@ function buildMatch() {
 
   render();
   showToast('Partida iniciada!');
-  playTone(350, 0.08, 'triangle', 0.03);
+  playTone(350, 0.08, 'triangle', 0.035);
 }
 
 function render() {
@@ -181,7 +197,7 @@ function renderPlayersHands() {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'card card-hand';
-        button.setAttribute('aria-label', `${card.rank} de ${card.suit}`);
+        button.setAttribute('aria-label', formatCardLabel(card));
         button.innerHTML = renderCardSvg(card, true);
         button.addEventListener('click', () => handleHumanPlay(card));
         container.appendChild(button);
@@ -191,9 +207,9 @@ function renderPlayersHands() {
 
     if (player.hand.length) {
       player.hand.forEach(() => {
-        const card = document.createElement('div');
-        card.className = 'card card-back';
-        container.appendChild(card);
+        const cardNode = document.createElement('div');
+        cardNode.className = 'card card-back';
+        container.appendChild(cardNode);
       });
     }
   });
@@ -296,21 +312,21 @@ function chooseAiCard(player) {
 
   if (state.played.length === 0) {
     return player.hand.reduce((best, current) => (
-      cardPower(current) > cardPower(best) ? current : best
+      getCardStrength(current) > getCardStrength(best) ? current : best
     ));
   }
 
   const lastCard = state.played[state.played.length - 1].card;
-  const strongCards = player.hand.filter((card) => compareCards(card, lastCard) > 0);
+  const winningCards = player.hand.filter((card) => compareCards(card, lastCard) > 0);
 
-  if (strongCards.length) {
-    return strongCards.reduce((best, current) => (
-      cardPower(current) > cardPower(best) ? current : best
+  if (winningCards.length) {
+    return winningCards.reduce((best, current) => (
+      getCardStrength(current) > getCardStrength(best) ? current : best
     ));
   }
 
   return player.hand.reduce((best, current) => (
-    cardPower(current) > cardPower(best) ? current : best
+    getCardStrength(current) > getCardStrength(best) ? current : best
   ));
 }
 
